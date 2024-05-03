@@ -1,17 +1,24 @@
 package luz.gaspario.crudluzgaspario2a
 
 import Modelo.ClaseConexion
+import Modelo.dataClassProductos
+import RecyclerViewHelper.Adaptador
 import android.os.Bundle
 import android.provider.Settings.Global
 import android.widget.Button
 import android.widget.EditText
+import android.widget.LinearLayout
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,6 +54,36 @@ class MainActivity : AppCompatActivity() {
                 addProducto.setInt(3, txtCantidad.text.toString().toInt())
 
                 addProducto.executeUpdate()
+            }
+        }
+
+        ////////////Mostrar/////////////
+        val rcvProductos = findViewById<RecyclerView>(R.id.rcvProductos)
+
+        //Asignar un layout al RecyclerView
+        rcvProductos.layoutManager = LinearLayoutManager(this)
+
+        //Función para obtener datos
+        fun obtenerDatos(): List<dataClassProductos>{
+            val objConexion = ClaseConexion().cadenaConexion()
+
+            val statement = objConexion?.createStatement()
+            val resultSet = statement?.executeQuery("select * from tbProductos")!!
+            val productos = mutableListOf<dataClassProductos>()
+            while (resultSet.next()){
+                val nombre = resultSet.getString("nombreProducto")
+                val producto = dataClassProductos(nombre)
+                productos.add(producto)
+            }
+            return productos
+        }
+
+        //Asignar un adaptador
+        CoroutineScope(Dispatchers.IO).launch {
+            val productoDB = obtenerDatos()
+            withContext(Dispatchers.Main){
+                val miAdapter = Adaptador(productoDB)
+                rcvProductos.adapter = miAdapter
             }
         }
     }

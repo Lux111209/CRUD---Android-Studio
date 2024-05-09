@@ -22,10 +22,24 @@
 
         <TextView
             android:id="@+id/txtProductoCrad"
-            android:layout_width="wrap_content"
+            android:layout_width="249dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="TextView"
             android:textSize="34sp" />
+
+        <ImageView
+            android:id="@+id/imgEditar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            app:srcCompat="@drawable/ic_baseline_edit_24" />
+
+        <ImageView
+            android:id="@+id/imgBorrar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            app:srcCompat="@drawable/ic_baseline_delete_24" />
     </LinearLayout>
 </androidx.cardview.widget.CardView>

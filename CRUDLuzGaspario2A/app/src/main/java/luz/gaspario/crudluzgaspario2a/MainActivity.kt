@@ -37,25 +37,13 @@ class MainActivity : AppCompatActivity() {
         val txtCantidad = findViewById<EditText>(R.id.txtCantidad)
         val btnAgregar = findViewById<Button>(R.id.btnAgregar)
 
-        //2. Programar el boton
-        btnAgregar.setOnClickListener {
-            GlobalScope.launch(Dispatchers.IO){
-
-
-                //Guardar datos
-                //1. Creo un objeto de la clase conexcion
-                val claseConexion = ClaseConexion().cadenaConexion()
-
-                //2. Creo una variable que contenga un PrepareStatement
-                val addProducto = claseConexion?.prepareStatement("insert into tbProductos(nombreProducto, precio, cantidad) values(?, ?, ?)")!!
-
-                addProducto.setString(1, txtNombre.text.toString())
-                addProducto.setInt(2, txtPrecio.text.toString().toInt())
-                addProducto.setInt(3, txtCantidad.text.toString().toInt())
-
-                addProducto.executeUpdate()
-            }
+        fun limpiar(){
+            txtNombre.setText("")
+            txtPrecio.setText("")
+            txtCantidad.setText("")
         }
+
+        //////////////////// TODO: Mostrar Datos ////////////////////
 
         ////////////Mostrar/////////////
         val rcvProductos = findViewById<RecyclerView>(R.id.rcvProductos)
@@ -86,5 +74,35 @@ class MainActivity : AppCompatActivity() {
                 rcvProductos.adapter = miAdapter
             }
         }
+
+        //////////////////// TODO: Guardar Productos ////////////////////
+
+        //2. Programar el boton
+        btnAgregar.setOnClickListener {
+            GlobalScope.launch(Dispatchers.IO){
+
+
+                //Guardar datos
+                //1. Creo un objeto de la clase conexcion
+                val claseConexion = ClaseConexion().cadenaConexion()
+
+                //2. Creo una variable que contenga un PrepareStatement
+                val addProducto = claseConexion?.prepareStatement("insert into tbProductos(nombreProducto, precio, cantidad) values(?, ?, ?)")!!
+
+                addProducto.setString(1, txtNombre.text.toString())
+                addProducto.setInt(2, txtPrecio.text.toString().toInt())
+                addProducto.setInt(3, txtCantidad.text.toString().toInt())
+
+                addProducto.executeUpdate()
+
+                val  nuevosProductos = obtenerDatos()
+                withContext(Dispatchers.Main){
+                    (rcvProductos.adapter as? Adaptador)?.actualizarLista(nuevosProductos)
+                }
+            }
+            //limpiar()
+        }
+
+
     }
 }

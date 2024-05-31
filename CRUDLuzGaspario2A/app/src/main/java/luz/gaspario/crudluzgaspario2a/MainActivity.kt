@@ -19,6 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.UUID
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -59,8 +60,11 @@ class MainActivity : AppCompatActivity() {
             val resultSet = statement?.executeQuery("select * from tbProductos")!!
             val productos = mutableListOf<dataClassProductos>()
             while (resultSet.next()){
+                val uuid = resultSet.getString("uuid")
                 val nombre = resultSet.getString("nombreProducto")
-                val producto = dataClassProductos(nombre)
+                val precio = resultSet.getInt("precio")
+                val cantidad = resultSet.getInt("cantidad")
+                val producto = dataClassProductos(uuid, nombre, precio, cantidad)
                 productos.add(producto)
             }
             return productos
@@ -87,11 +91,13 @@ class MainActivity : AppCompatActivity() {
                 val claseConexion = ClaseConexion().cadenaConexion()
 
                 //2. Creo una variable que contenga un PrepareStatement
-                val addProducto = claseConexion?.prepareStatement("insert into tbProductos(nombreProducto, precio, cantidad) values(?, ?, ?)")!!
+                //PrepareStatement es para ejecutar consultas
+                val addProducto = claseConexion?.prepareStatement("insert into tbProductos(uuid, nombreProducto, precio, cantidad) values(?, ?, ?, ?)")!!
 
-                addProducto.setString(1, txtNombre.text.toString())
-                addProducto.setInt(2, txtPrecio.text.toString().toInt())
-                addProducto.setInt(3, txtCantidad.text.toString().toInt())
+                addProducto.setString(1, UUID.randomUUID().toString())
+                addProducto.setString(2, txtNombre.text.toString())
+                addProducto.setInt(3, txtPrecio.text.toString().toInt())
+                addProducto.setInt(4, txtCantidad.text.toString().toInt())
 
                 addProducto.executeUpdate()
 

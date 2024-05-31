@@ -3,19 +3,54 @@ package RecyclerViewHelper
 import Modelo.ClaseConexion
 import Modelo.dataClassProductos
 import android.app.AlertDialog
+import android.content.Intent
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.EditText
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import luz.gaspario.crudluzgaspario2a.R
+import luz.gaspario.crudluzgaspario2a.detalle_Productos
 
 class Adaptador(private var Datos: List<dataClassProductos>) : RecyclerView.Adapter<ViewHolder>() {
 
     fun actualizarLista(nuevaLista: List<dataClassProductos>){
         Datos = nuevaLista
         notifyDataSetChanged()
+
+    }
+
+    //Función para actualizar el reciclerView cuando actualizo los datos
+
+    fun actualizarListaDespuesDeActualizar(uuid: String, nuevoNombre: String){
+        val index = Datos.indexOfFirst { it.uuid ==uuid }
+        Datos[index].NombreProducto = nuevoNombre
+        notifyItemChanged(index)
+    }
+    fun actualizarProducto(nombreProducto: String, uuid: String){
+
+        //Creo una corrutina
+        //Una corrutina es como un hilo multitarea par no sobrecargar
+        GlobalScope.launch(Dispatchers.IO){
+            //1. Creo un objeto de la clase conexión
+            val objConexion = ClaseConexion().cadenaConexion()
+
+            //2. Creo una variable que contenga un prepareStatement
+            val updateProducto = objConexion?.prepareStatement("update tbProductos set nombreProducto = ? where uuid = ?")!!
+            updateProducto.setString(1, nombreProducto)
+            updateProducto.setString(2, uuid)
+            updateProducto.executeUpdate()
+
+            val commit = objConexion.prepareStatement("commit")!!
+            commit.executeUpdate()
+
+            withContext(Dispatchers.Main) {
+                actualizarListaDespuesDeActualizar(uuid, nombreProducto)
+            }
+        }
 
     }
 
@@ -35,6 +70,8 @@ class Adaptador(private var Datos: List<dataClassProductos>) : RecyclerView.Adap
 
             val commit = objConexion.prepareStatement("commit")!!
             commit.executeUpdate()
+
+
         }
 
         //Le decimos al Adaptador que se eliminaron los datos
@@ -49,7 +86,7 @@ class Adaptador(private var Datos: List<dataClassProductos>) : RecyclerView.Adap
     override fun getItemCount() = Datos.size
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val producto = Datos[position]
-        holder.textView.text = producto.nombreProducto
+        holder.textView.text = producto.NombreProducto
 
         val item = Datos[position]
 
@@ -69,7 +106,7 @@ class Adaptador(private var Datos: List<dataClassProductos>) : RecyclerView.Adap
 
             //Paso final, agregar los botones
             builder.setPositiveButton("Si"){ dialog, which ->
-                eliminarRegistro(item.nombreProducto,position)
+                eliminarRegistro(item.NombreProducto,position)
 
             }
             builder.setNegativeButton("No"){ dialog, which ->
@@ -83,5 +120,49 @@ class Adaptador(private var Datos: List<dataClassProductos>) : RecyclerView.Adap
             alertDialog.show()
         }
 
+        holder.imgEditar.setOnClickListener {
+
+            val context = holder.itemView.context
+
+            //Creo la alerta
+            val builder = AlertDialog.Builder(context)
+            builder.setTitle("Modificar nombre")
+
+            //Agregamos un cuadro de texto para que el usuario pueda escribir el nuevo nombre
+
+            val cuadritoNuevoNombre = EditText(context)
+            cuadritoNuevoNombre.setHint(item.NombreProducto)
+            builder.setView(cuadritoNuevoNombre)
+
+            builder.setPositiveButton("Actualizar"){ dialog, wich ->
+                actualizarProducto(cuadritoNuevoNombre.text.toString(), item.uuid)
+            }
+
+            builder.setNegativeButton("Cancelar"){ dialog, wich ->
+                dialog.dismiss()
+            }
+
+            val dialog = builder.create()
+            dialog.show()
+        }
+
+        //Darle clic a la card
+
+        holder.itemView.setOnClickListener {
+            //Invoco el contexto
+            val context = holder.itemView.context
+
+            //Cambiamos de pantalla
+            //Abro la pantalla de DetalleProducto
+            val pantallaDetalles = Intent(context, detalle_Productos::class.java)
+
+            //Aquí, ANTES de abrir la pantalla, le mando los parámetros
+            pantallaDetalles.putExtra("uuid", item.uuid)
+            pantallaDetalles.putExtra("nombre", item.NombreProducto)
+            pantallaDetalles.putExtra("precio", item.precio)
+            pantallaDetalles.putExtra("cantidad", item.cantidad)
+
+            context.startActivity(pantallaDetalles)
+        }
     }
 }
